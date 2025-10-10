@@ -69,24 +69,60 @@ public class ValidationItemControllerV2 {
         return "redirect:/validation/v2/items/{itemId}";
     }
 
-    private <T> void addItemFieldError(String fieldName, T fieldValue, String errorMessage, BindingResult bindingResult) {
+    private <T> void addItemFieldErrorV2(String fieldName, T fieldValue, String errorMessage, BindingResult bindingResult) {
         bindingResult.addError(new FieldError("item", fieldName, fieldValue, false, null, null, errorMessage));
     }
 
-    @PostMapping("/add")
+//    @PostMapping("/add")
     public String addItemV2(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
 
         if (!StringUtils.hasText(item.getItemName())) {
-            addItemFieldError("itemName", item.getItemName(), "상품 이름은 필수입니다", bindingResult);
+            addItemFieldErrorV2("itemName", item.getItemName(), "상품 이름은 필수입니다", bindingResult);
         }
         if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1_000_000) {
-            addItemFieldError("price", item.getPrice(), "가격은 1,000 ~ 1,000,000원까지 입력 가능합니다", bindingResult);
+            addItemFieldErrorV2("price", item.getPrice(), "가격은 1,000 ~ 1,000,000원까지 입력 가능합니다", bindingResult);
         }
         if (item.getQuantity() == null || item.getQuantity() < 0 || item.getQuantity() > 9999) {
-            addItemFieldError("quantity", item.getQuantity(), "수량은 최대 9,999개까지 입력 가능합니다", bindingResult);
+            addItemFieldErrorV2("quantity", item.getQuantity(), "수량은 최대 9,999개까지 입력 가능합니다", bindingResult);
         }
         if (item.getPrice() != null && item.getQuantity() != null && item.getPrice() * item.getQuantity() < 10_000) {
             bindingResult.addError(new ObjectError("item", "가격과 수량의 곱은 10,000원 이상이어야 합니다. 현재 값 = " + item.getPrice() * item.getQuantity()));
+        }
+
+        if (bindingResult.hasErrors()) {
+            return "validation/v2/addForm";
+        }
+
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/validation/v2/items/{itemId}";
+    }
+
+    private <T> void addItemFieldErrorV3(String fieldName, T fieldValue,
+                                         String errorCode, Object[] args,
+                                         BindingResult bindingResult) {
+        bindingResult.addError(new FieldError(
+                "item", fieldName, fieldValue, false, new String[]{errorCode}, args, null
+        ));
+    }
+
+    @PostMapping("/add")
+    public String addItemV3(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+
+        if (!StringUtils.hasText(item.getItemName())) {
+            addItemFieldErrorV3("itemName", item.getItemName(), "required.item.itemName", null, bindingResult);
+        }
+        if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1_000_000) {
+            addItemFieldErrorV3("price", item.getPrice(), "range.item.price", new Object[]{1_000, 1_000_000}, bindingResult);
+        }
+        if (item.getQuantity() == null || item.getQuantity() < 0 || item.getQuantity() > 9999) {
+            addItemFieldErrorV3("quantity", item.getQuantity(), "max.item.quantity", new Object[]{9999}, bindingResult);
+        }
+        if (item.getPrice() != null && item.getQuantity() != null && item.getPrice() * item.getQuantity() < 10_000) {
+            bindingResult.addError(
+                    new ObjectError("item", new String[]{"totalPriceMin"}, new Object[]{10_000, item.getPrice() * item.getQuantity()}, null)
+            );
         }
 
         if (bindingResult.hasErrors()) {
