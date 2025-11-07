@@ -1,4 +1,4 @@
-package yechan.inflearn_spring_mvc_2_3.domain.item;
+package yechan.inflearn_spring_mvc_2_3.web.validation.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
@@ -7,21 +7,25 @@ import lombok.Data;
 import org.hibernate.validator.constraints.Range;
 
 @Data
-//@ScriptAssert(lang = "javascript", script = "_this.price * _this.quantity >= 10_000", message = "총합이 10000 이상이어야 합니다.")
-public class Item {
+public class ItemUpdateDto {
 
+    @NotNull
     private Long id;
 
+    @NotBlank
     private String itemName;
 
+    @NotNull
+    @Range(min = 1000, max = 1_000_000)
     private Integer price;
 
+    @NotNull
     private Integer quantity;
 
-    public Item() {
+    public ItemUpdateDto() {
     }
 
-    public Item(String itemName, Integer price, Integer quantity) {
+    public ItemUpdateDto(String itemName, Integer price, Integer quantity) {
         this.itemName = itemName;
         this.price = price;
         this.quantity = quantity;
