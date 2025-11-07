@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import yechan.inflearn_spring_mvc_2_3.domain.item.Item;
 import yechan.inflearn_spring_mvc_2_3.domain.item.ItemRepository;
+import yechan.inflearn_spring_mvc_2_3.domain.item.SaveCheck;
+import yechan.inflearn_spring_mvc_2_3.domain.item.UpdateCheck;
 
 import java.util.List;
 
@@ -41,8 +43,24 @@ public class ValidationItemControllerV3 {
         return "validation/v3/addForm";
     }
 
+//    @PostMapping("/add")
+    public String addItem(@Validated(SaveCheck.class) @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+        if (item.getPrice() != null && item.getQuantity() != null && item.getPrice() * item.getQuantity() < 10_000) {
+            bindingResult.reject("totalPriceMin", new Object[]{10_000, item.getPrice() * item.getQuantity()}, null);
+        }
+
+        if (bindingResult.hasErrors()) {
+            return "validation/v3/addForm";
+        }
+
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/validation/v3/items/{itemId}";
+    }
+
     @PostMapping("/add")
-    public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+    public String addItem2(@Validated @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
         if (item.getPrice() != null && item.getQuantity() != null && item.getPrice() * item.getQuantity() < 10_000) {
             bindingResult.reject("totalPriceMin", new Object[]{10_000, item.getPrice() * item.getQuantity()}, null);
         }
@@ -64,7 +82,7 @@ public class ValidationItemControllerV3 {
         return "validation/v3/editForm";
     }
 
-    @PostMapping("/{itemId}/edit")
+//    @PostMapping("/{itemId}/edit")
     public String edit(@PathVariable Long itemId, @Validated @ModelAttribute Item item, BindingResult bindingResult) {
         if (item.getPrice() != null && item.getQuantity() != null && item.getPrice() * item.getQuantity() < 10_000) {
             bindingResult.reject("totalPriceMin", new Object[]{10_000, item.getPrice() * item.getQuantity()}, null);
@@ -79,5 +97,19 @@ public class ValidationItemControllerV3 {
         return "redirect:/validation/v3/items/{itemId}";
     }
 
+    @PostMapping("/{itemId}/edit")
+    public String editV2(@PathVariable Long itemId, @Validated(UpdateCheck.class) @ModelAttribute Item item, BindingResult bindingResult) {
+        if (item.getPrice() != null && item.getQuantity() != null && item.getPrice() * item.getQuantity() < 10_000) {
+            bindingResult.reject("totalPriceMin", new Object[]{10_000, item.getPrice() * item.getQuantity()}, null);
+        }
+
+        if (bindingResult.hasErrors()) {
+            log.info("errors={}", bindingResult);
+            return "validation/v3/editForm";
+        }
+
+        itemRepository.update(itemId, item);
+        return "redirect:/validation/v3/items/{itemId}";
+    }
 }
 
