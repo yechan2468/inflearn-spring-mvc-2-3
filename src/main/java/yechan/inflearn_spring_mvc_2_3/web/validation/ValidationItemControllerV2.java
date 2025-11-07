@@ -7,6 +7,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
+import org.springframework.validation.ValidationUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import yechan.inflearn_spring_mvc_2_3.domain.item.Item;
@@ -138,9 +139,7 @@ public class ValidationItemControllerV2 {
     @PostMapping("/add")
     public String addItemV4(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
 
-        if (!StringUtils.hasText(item.getItemName())) {
-            bindingResult.rejectValue("itemName", "required");
-        }
+        ValidationUtils.rejectIfEmptyOrWhitespace(bindingResult, "itemName", "required");
         if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1_000_000) {
             bindingResult.rejectValue("price", "range", new Object[]{1_000, 1_000_000}, null);
         }
